@@ -1,0 +1,3 @@
+﻿@using SupermercadoCRUD2
+@using SupermercadoCRUD2.Models.Entity
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers

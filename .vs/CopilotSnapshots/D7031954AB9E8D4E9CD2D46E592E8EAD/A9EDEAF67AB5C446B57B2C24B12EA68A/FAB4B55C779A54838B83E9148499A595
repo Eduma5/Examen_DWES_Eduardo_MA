@@ -1,0 +1,17 @@
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace SupermercadoCRUD2.Models.Entity
+{
+    [Table("categoria")]
+    public class Categoria
+    {
+        [Key]
+        public int IdCategoria { get; set; }
+
+        [Column("categoria")]
+        public string? Nombre { get; set; }
+
+        public List<Producto> Productos { get; set; } = new();
+    }
+}

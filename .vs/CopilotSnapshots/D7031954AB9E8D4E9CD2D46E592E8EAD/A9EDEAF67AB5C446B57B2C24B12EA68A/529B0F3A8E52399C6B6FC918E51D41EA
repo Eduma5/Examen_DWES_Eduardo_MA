@@ -1,0 +1,104 @@
+﻿using SupermercadoCRUD2.Data.Repositorios;
+using SupermercadoCRUD2.Models.Dto;
+using SupermercadoCRUD2.Models.Entity;
+
+namespace SupermercadoCRUD2.Servicios
+{
+    public class ServicioVentas
+    {
+        private readonly IVentaRepositorio _ventaRepositorio;
+        private readonly IProductoRepositorio _productoRepositorio;
+
+        public ServicioVentas(IVentaRepositorio ventaRepositorio, IProductoRepositorio productoRepositorio)
+        {
+            _ventaRepositorio = ventaRepositorio;
+            _productoRepositorio = productoRepositorio;
+        }
+
+        public async Task<IEnumerable<VentaDto>> ObtenerTodasAsync()
+        {
+            var ventas = await _ventaRepositorio.ObtenerTodasAsync();
+            return ventas.Select(MapearADto);
+        }
+
+        public async Task<IEnumerable<VentaDto>> ObtenerPorProductoAsync(int idProducto)
+        {
+            var ventas = await _ventaRepositorio.ObtenerPorProductoAsync(idProducto);
+            return ventas.Select(MapearADto);
+        }
+
+        public async Task<VentaDto?> ObtenerPorIdAsync(int id)
+        {
+            var venta = await _ventaRepositorio.ObtenerPorIdAsync(id);
+            return venta != null ? MapearADto(venta) : null;
+        }
+
+        public async Task<(bool Exito, string Mensaje, VentaDto? Venta)> CrearVentaAsync(VentaDto ventaDto)
+        {
+            // Validar que existe el producto
+            var producto = await _productoRepositorio.ObtenerPorIdAsync(ventaDto.IdProducto);
+            if (producto == null)
+            {
+                return (false, "El producto seleccionado no existe.", null);
+            }
+
+            // Verificar stock suficiente
+            if (producto.Stock < ventaDto.Cantidad)
+            {
+                return (false, $"Stock insuficiente. Stock disponible: {producto.Stock} unidades.", null);
+            }
+
+            // Crear la venta
+            var venta = new Venta
+            {
+                IdProducto = ventaDto.IdProducto,
+                Cantidad = ventaDto.Cantidad,
+                Precio = ventaDto.Precio,
+                Fecha = DateTime.Now
+            };
+
+            var ventaCreada = await _ventaRepositorio.InsertarAsync(venta);
+
+            // Actualizar el stock del producto
+            producto.Stock -= ventaDto.Cantidad;
+            await _productoRepositorio.ActualizarAsync(producto);
+
+            // Cargar el producto en la venta para el mapeo
+            ventaCreada.Producto = producto;
+
+            return (true, "Venta creada exitosamente.", MapearADto(ventaCreada));
+        }
+
+        public async Task<bool> EliminarVentaAsync(int id)
+        {
+            return await _ventaRepositorio.EliminarAsync(id);
+        }
+
+        public async Task<IEnumerable<ProductoDto>> ObtenerProductosDisponiblesAsync()
+        {
+            var productos = await _productoRepositorio.ObtenerTodosAsync();
+            return productos.Select(p => new ProductoDto
+            {
+                IdProducto = p.IdProducto,
+                Nombre = p.Nombre,
+                Precio = p.Precio,
+                Stock = p.Stock,
+                Medida = p.Medida
+            });
+        }
+
+        private VentaDto MapearADto(Venta venta)
+        {
+            return new VentaDto
+            {
+                IdVenta = venta.IdVenta,
+                IdProducto = venta.IdProducto,
+                Cantidad = venta.Cantidad,
+                Precio = venta.Precio,
+                Fecha = venta.Fecha,
+                NombreProducto = venta.Producto?.Nombre,
+                Subtotal = venta.Subtotal
+            };
+        }
+    }
+}

@@ -1,0 +1,104 @@
+﻿@model IEnumerable<VentaDto>
+
+@{
+    ViewData["Title"] = "Gestión de Ventas";
+}
+
+<div class="container mt-4">
+    <h1 class="mb-4">@ViewData["Title"]</h1>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Nueva Venta
+            </a>
+        </div>
+        <div class="col-md-6">
+            <form asp-action="Index" method="get" class="d-flex">
+                <select name="filtroProducto" class="form-select me-2" onchange="this.form.submit()">
+                    <option value="">Todos los productos</option>
+                    @foreach (var producto in ViewBag.NombresProductos as SelectList)
+                    {
+                        <option value="@producto.Text" selected="@(producto.Text == ViewBag.FiltroActivo)">
+                            @producto.Text
+                        </option>
+                    }
+                </select>
+                @if (ViewBag.FiltroActivo != null)
+                {
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Limpiar
+                    </a>
+                }
+            </form>
+        </div>
+    </div>
+
+    @if (Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Subtotal</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var venta in Model)
+                    {
+                        <tr>
+                            <td>@venta.IdVenta</td>
+                            <td>@venta.Producto</td>
+                            <td>@venta.Cantidad</td>
+                            <td>@venta.Precio.ToString("C")</td>
+                            <td class="fw-bold">@venta.Subtotal.ToString("C")</td>
+                            <td>
+                                <form asp-action="Delete" asp-route-id="@venta.IdVenta" method="post" style="display:inline;" 
+                                      onsubmit="return confirm('¿Está seguro de eliminar esta venta?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="bi bi-trash"></i> Eliminar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="table-info fw-bold">
+                        <td colspan="4" class="text-end">Total:</td>
+                        <td>@Model.Sum(v => v.Subtotal).ToString("C")</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No hay ventas registradas.
+        </div>
+    }
+</div>

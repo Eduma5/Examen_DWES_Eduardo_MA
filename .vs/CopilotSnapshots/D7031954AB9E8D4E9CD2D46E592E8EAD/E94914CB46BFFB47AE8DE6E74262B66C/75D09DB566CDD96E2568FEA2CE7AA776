@@ -1,0 +1,21 @@
+﻿using SupermercadoCRUD2.Models.Entity;
+
+namespace SupermercadoCRUD2.Data.Repositorios
+{
+    public interface IProductoRepositorio
+    {
+        List<Producto> Listar();
+        Producto? ObtenerPorId(int id);
+        void Crear(Producto producto);
+        void Editar(Producto producto);
+        void Eliminar(int id);
+        int ObtenerUltimoId();
+        List<Categoria> ListarCategorias();
+
+        // Métodos asíncronos para el servicio de ventas
+        Task<IEnumerable<Producto>> ObtenerTodosAsync();
+        Task<Producto?> ObtenerPorIdAsync(int id);
+        Task ActualizarAsync(Producto producto);
+    }
+}
+

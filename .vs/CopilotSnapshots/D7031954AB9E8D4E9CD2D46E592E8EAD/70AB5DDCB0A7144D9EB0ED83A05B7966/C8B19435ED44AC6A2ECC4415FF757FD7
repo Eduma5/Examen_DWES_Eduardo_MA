@@ -1,0 +1,60 @@
+﻿using Microsoft.EntityFrameworkCore;
+using SupermercadoCRUD.Data;
+using SupermercadoCRUD2.Models.Entity;
+
+namespace SupermercadoCRUD2.Data.Repositorios
+{
+    public class VentaRepositorio : IVentaRepositorio
+    {
+        private readonly SupermercadoContext _context;
+
+        public VentaRepositorio(SupermercadoContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<IEnumerable<Venta>> ObtenerTodasAsync()
+        {
+            return await _context.Ventas
+                .Include(v => v.Producto)
+                .OrderByDescending(v => v.Fecha)
+                .ToListAsync();
+        }
+
+        public async Task<Venta?> ObtenerPorIdAsync(int id)
+        {
+            return await _context.Ventas
+                .Include(v => v.Producto)
+                .FirstOrDefaultAsync(v => v.IdVenta == id);
+        }
+
+        public async Task<IEnumerable<Venta>> ObtenerPorProductoAsync(int idProducto)
+        {
+            return await _context.Ventas
+                .Include(v => v.Producto)
+                .Where(v => v.IdProducto == idProducto)
+                .OrderByDescending(v => v.Fecha)
+                .ToListAsync();
+        }
+
+        public async Task<Venta> InsertarAsync(Venta venta)
+        {
+            _context.Ventas.Add(venta);
+            await _context.SaveChangesAsync();
+            return venta;
+        }
+
+        public async Task<bool> EliminarAsync(int id)
+        {
+            var venta = await _context.Ventas.FindAsync(id);
+            if (venta == null)
+            {
+                return false;
+            }
+
+            _context.Ventas.Remove(venta);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+    }
+}

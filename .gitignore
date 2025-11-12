@@ -1,0 +1,58 @@
+## Ignorar archivos de compilación y temporales de .NET
+
+# Carpetas de compilación
+bin/
+obj/
+
+# Archivos generados por Visual Studio
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# Archivos generados por Rider
+.idea/
+*.sln.iml
+
+# Archivos generados por VS Code
+.vscode/
+
+# Archivos de base de datos local
+*.db
+*.db-shm
+*.db-wal
+
+# Archivos de log
+*.log
+
+# Archivos temporales
+*.tmp
+*.bak
+*.swp
+*~
+
+# Archivos de paquetes NuGet
+*.nupkg
+*.snupkg
+packages/
+
+# Archivos de publicación
+publish/
+*.pubxml
+*.publishproj
+
+# Archivos de usuario específicos
+launchSettings.json
+
+# Archivos generados automáticamente de Razor
+*.cshtml.g.cs
+*.razor.g.cs
+*.cshtml.H-*.ide.g.cs
+
+# Node modules (si se usa npm/node)
+node_modules/
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db

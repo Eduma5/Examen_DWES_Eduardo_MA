@@ -1,0 +1,113 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using SupermercadoCRUD2.Models.Dto;
+using SupermercadoCRUD2.Servicios;
+
+namespace SupermercadoCRUD2.Controllers
+{
+    public class VentasController : Controller
+    {
+        private readonly ServicioVentas _servicioVentas;
+
+        public VentasController(ServicioVentas servicioVentas)
+        {
+            _servicioVentas = servicioVentas;
+        }
+
+        // GET: Ventas
+        public async Task<IActionResult> Index(int? filtroProducto)
+        {
+            IEnumerable<VentaDto> ventas;
+
+            if (filtroProducto.HasValue && filtroProducto.Value > 0)
+            {
+                ventas = await _servicioVentas.ObtenerPorProductoAsync(filtroProducto.Value);
+                ViewBag.FiltroActivo = filtroProducto.Value;
+            }
+            else
+            {
+                ventas = await _servicioVentas.ObtenerTodasAsync();
+            }
+
+            // Obtener lista de productos para el filtro
+            var productos = await _servicioVentas.ObtenerProductosDisponiblesAsync();
+            ViewBag.Productos = new SelectList(productos, "IdProducto", "Nombre");
+
+            return View(ventas);
+        }
+
+        // GET: Ventas/Create
+        public async Task<IActionResult> Create()
+        {
+            var productos = await _servicioVentas.ObtenerProductosDisponiblesAsync();
+            ViewBag.Productos = new SelectList(productos, "IdProducto", "Nombre");
+            
+            var ventaDto = new VentaDto
+            {
+                Fecha = DateTime.Now
+            };
+
+            return View(ventaDto);
+        }
+
+        // POST: Ventas/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(VentaDto ventaDto)
+        {
+            if (ModelState.IsValid)
+            {
+                var resultado = await _servicioVentas.CrearVentaAsync(ventaDto);
+
+                if (resultado.Exito)
+                {
+                    TempData["SuccessMessage"] = resultado.Mensaje;
+                    return RedirectToAction(nameof(Index));
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, resultado.Mensaje);
+                }
+            }
+
+            // Si llegamos aquí, algo falló, volver a mostrar el formulario
+            var productos = await _servicioVentas.ObtenerProductosDisponiblesAsync();
+            ViewBag.Productos = new SelectList(productos, "IdProducto", "Nombre", ventaDto.IdProducto);
+            return View(ventaDto);
+        }
+
+        // POST: Ventas/Delete/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var resultado = await _servicioVentas.EliminarVentaAsync(id);
+
+            if (resultado)
+            {
+                TempData["SuccessMessage"] = "Venta eliminada exitosamente.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "No se pudo eliminar la venta.";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // API endpoint para obtener precio de producto
+        [HttpGet]
+        public async Task<JsonResult> ObtenerPrecioProducto(int idProducto)
+        {
+            var productos = await _servicioVentas.ObtenerProductosDisponiblesAsync();
+            var producto = productos.FirstOrDefault(p => p.IdProducto == idProducto);
+            
+            if (producto != null)
+            {
+                return Json(new { precio = producto.Precio, stock = producto.Stock });
+            }
+            
+            return Json(new { precio = 0, stock = 0 });
+        }
+    }
+}

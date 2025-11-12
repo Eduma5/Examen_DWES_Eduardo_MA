@@ -1,0 +1,25 @@
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace SupermercadoCRUD2.Models.Entity
+{
+    [Table("producto")]
+    public class Producto
+    {
+        [Key]
+        public int IdProducto { get; set; }
+
+        public string? Nombre { get; set; }
+
+        public int IdCategoria { get; set; }
+
+        public string? Medida { get; set; }
+
+        public int Precio { get; set; }
+
+        public int Stock { get; set; }
+
+        [ForeignKey("IdCategoria")]
+        public Categoria? Categoria { get; set; }
+    }
+}

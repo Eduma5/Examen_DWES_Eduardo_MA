@@ -1,0 +1,154 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SupermercadoCRUD2.Models;
+using SupermercadoCRUD2.Models.Dto;
+using SupermercadoCRUD2.Servicios;
+using System.Diagnostics;
+
+namespace SupermercadoCRUD.Controllers
+{
+    public class HomeController : Controller
+    {
+        private readonly ServicioProductos _servicio;
+        private readonly ILogger<HomeController> _logger;
+
+        public HomeController(ILogger<HomeController> logger, ServicioProductos servicio)
+        {
+            _logger = logger;
+            _servicio = servicio;
+        }
+
+        // ---- INDEX ----
+        public IActionResult Index()
+        {
+            _logger.LogInformation("Entrando en Index()");
+            List<ProductoDto> lista = _servicio.Listar();
+            _logger.LogInformation($"Se han recuperado {lista.Count} productos.");
+            return View(lista);
+        }
+
+        // ---- CREATE GET ----
+        [HttpGet]
+        public IActionResult Create()
+        {
+            _logger.LogInformation("Entrando en Create(GET)");
+            var nuevoProducto = new ProductoDto
+            {
+                IdProducto = _servicio.ObtenerSiguienteId()
+            };
+
+            ViewBag.Categorias = _servicio.ObtenerCategorias();
+            _logger.LogInformation("Formulario de creación preparado con IdProducto = {Id}", nuevoProducto.IdProducto);
+
+            return View(nuevoProducto);
+        }
+
+        // ---- CREATE POST ----
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Create(ProductoDto dto)
+        {
+            _logger.LogInformation("Entrando en Create(POST)");
+            _logger.LogInformation("ModelState válido? {Valido}", ModelState.IsValid);
+
+            if (ModelState.IsValid)
+            {
+                _logger.LogInformation("Llamando a servicio.Crear()");
+                _servicio.Crear(dto);
+                _logger.LogInformation("Se ha llamado a servicio.Crear(). Redirigiendo a Index()");
+                return RedirectToAction("Index");
+            }
+
+            _logger.LogWarning("ModelState no válido. Se recarga el formulario de creación.");
+            ViewBag.Categorias = _servicio.ObtenerCategorias();
+            return View(dto);
+        }
+
+        // ---- EDIT GET ----
+        [HttpGet]
+        public IActionResult Edit(int id)
+        {
+            _logger.LogInformation("Entrando en Edit(GET) con Id={Id}", id);
+            var dto = _servicio.ObtenerPorId(id);
+            if (dto == null)
+            {
+                _logger.LogWarning("No se encontró el producto con Id={Id}", id);
+                return NotFound();
+            }
+
+            ViewBag.Categorias = _servicio.ObtenerCategorias();
+            _logger.LogInformation("Formulario de edición cargado para Id={Id}", id);
+            return View(dto);
+        }
+
+        // ---- EDIT POST ----
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Edit(ProductoDto dto)
+        {
+            _logger.LogInformation("Entrando en Edit(POST) para Id={Id}", dto.IdProducto);
+
+            if (ModelState.IsValid)
+            {
+                _logger.LogInformation("Llamando a servicio.Editar()");
+                _servicio.Editar(dto);
+                _logger.LogInformation("Producto actualizado. Redirigiendo a Index()");
+                return RedirectToAction("Index");
+            }
+
+            _logger.LogWarning("ModelState no válido en Edit. Se recarga el formulario.");
+            ViewBag.Categorias = _servicio.ObtenerCategorias();
+            return View(dto);
+        }
+
+        // ---- DELETE GET ----
+        [HttpGet]
+        public IActionResult Delete(int id)
+        {
+            _logger.LogInformation("Entrando en Delete(GET) con Id={Id}", id);
+            var dto = _servicio.ObtenerPorId(id);
+            if (dto == null)
+            {
+                _logger.LogWarning("No se encontró el producto con Id={Id}", id);
+                return NotFound();
+            }
+
+            _logger.LogInformation("Formulario de confirmación de borrado cargado para Id={Id}", id);
+            return View(dto);
+        }
+
+        // ---- DELETE POST ----
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Delete(ProductoDto dto)
+        {
+            _logger.LogInformation("Entrando en Delete(POST) para Id={Id}", dto.IdProducto);
+
+            try
+            {
+                _servicio.Eliminar(dto.IdProducto);
+                _logger.LogInformation("Producto eliminado correctamente. Redirigiendo a Index()");
+                return RedirectToAction("Index");
+            }
+            catch (DbUpdateException)
+            {
+                _logger.LogError("Error al intentar eliminar el producto Id={Id}: está relacionado con otras entidades.", dto.IdProducto);
+                TempData["Error"] = "No se puede eliminar el producto porque está relacionado con otras entidades.";
+                return RedirectToAction("Index");
+            }
+        }
+
+        public IActionResult Privacy()
+        {
+            _logger.LogInformation("Entrando en Privacy()");
+            return View();
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            _logger.LogError("Entrando en Error()");
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+    }
+}

@@ -1,0 +1,103 @@
+﻿using Microsoft.EntityFrameworkCore;
+using SupermercadoCRUD.Data;
+using SupermercadoCRUD2.Models.Entity;
+
+namespace SupermercadoCRUD2.Data.Repositorios
+{
+    public class ProductoRepositorio : IProductoRepositorio
+    {
+        private readonly SupermercadoContext contexto;
+
+        public ProductoRepositorio(SupermercadoContext contexto)
+        {
+            this.contexto = contexto;
+        }
+
+        public List<Producto> Listar()
+        {
+            return contexto.Productos
+                .Include(p => p.Categoria)
+                .ToList();
+        }
+
+        public Producto? ObtenerPorId(int id)
+        {
+            return contexto.Productos
+                .Include(p => p.Categoria)
+                .FirstOrDefault(p => p.IdProducto == id);
+        }
+
+        public void Crear(Producto producto)
+        {
+            contexto.Productos.Add(producto);
+            contexto.SaveChanges();
+        }
+
+        public void Editar(Producto producto)
+        {
+            var existente = contexto.Productos.Find(producto.IdProducto);
+
+            if (existente == null) return;
+
+            existente.Nombre = producto.Nombre;
+            existente.Medida = producto.Medida;
+            existente.Precio = producto.Precio;
+            existente.Stock = producto.Stock;
+            existente.IdCategoria = producto.IdCategoria;
+
+            contexto.SaveChanges();
+        }
+
+        public void Eliminar(int id)
+        {
+            var producto = contexto.Productos.Find(id);
+            if (producto == null) return;
+
+            contexto.Productos.Remove(producto);
+            contexto.SaveChanges();
+        }
+
+        public int ObtenerUltimoId()
+        {
+            if (!contexto.Productos.Any())
+                return 0;
+
+            return contexto.Productos.Max(p => p.IdProducto);
+        }
+
+        public List<Categoria> ListarCategorias()
+        {
+            return contexto.Categorias.ToList();
+        }
+
+        // Métodos asíncronos
+        public async Task<IEnumerable<Producto>> ObtenerTodosAsync()
+        {
+            return await contexto.Productos
+                .Include(p => p.Categoria)
+                .ToListAsync();
+        }
+
+        public async Task<Producto?> ObtenerPorIdAsync(int id)
+        {
+            return await contexto.Productos
+                .Include(p => p.Categoria)
+                .FirstOrDefaultAsync(p => p.IdProducto == id);
+        }
+
+        public async Task ActualizarAsync(Producto producto)
+        {
+            var existente = await contexto.Productos.FindAsync(producto.IdProducto);
+
+            if (existente == null) return;
+
+            existente.Nombre = producto.Nombre;
+            existente.Medida = producto.Medida;
+            existente.Precio = producto.Precio;
+            existente.Stock = producto.Stock;
+            existente.IdCategoria = producto.IdCategoria;
+
+            await contexto.SaveChangesAsync();
+        }
+    }
+}

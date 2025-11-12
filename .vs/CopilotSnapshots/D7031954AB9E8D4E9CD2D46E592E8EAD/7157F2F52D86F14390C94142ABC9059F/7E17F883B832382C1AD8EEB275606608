@@ -1,0 +1,26 @@
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace SupermercadoCRUD2.Models.Entity
+{
+    [Table("venta")]
+    public class Venta
+    {
+        [Key]
+        public int IdVenta { get; set; }
+
+        public int IdProducto { get; set; }
+
+        public int Cantidad { get; set; }
+
+        public int Precio { get; set; }
+
+        public DateTime Fecha { get; set; }
+
+        [ForeignKey("IdProducto")]
+        public Producto? Producto { get; set; }
+
+        [NotMapped]
+        public int Subtotal => Cantidad * Precio;
+    }
+}
